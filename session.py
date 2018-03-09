@@ -14,6 +14,7 @@ from tools import frame_path_to_idx
 sessions_dir = 'data/Sessions/'
 frame_format = '.jpg'
 point_format = '.txt'
+subclip_format = '.mp4'
 
 categories = ['Laughter', 'SpeechLaughter', 'PosedLaughter']
 
@@ -32,7 +33,7 @@ class Session(object):
             raise Exception('No LOLs found for session %d. (empty csv)' % self.idx)
 
         self.video_file = glob(self.session_path + '/S???-???.avi')[0]
-        self.laugh_subclips = sorted(glob(self.session_path + '/S???-???-l???.avi'))
+        self.laugh_subclips = sorted(glob(self.session_path + '/S???-???-l???' + subclip_format))
         self.audio_file = glob(self.session_path + '/S*_mic.wav')[0]
         self.audio_rate = 0
         self.audio = dict()
@@ -76,14 +77,14 @@ class Session(object):
         avi, wav = self.video_file, self.audio_file
 
         for idx, (start, end) in self.csv_times.items():
-            out = avi.replace('.avi', '-l' + str(idx).zfill(3) + '.mp4')
+            out = avi.replace('.avi', '-l' + str(idx).zfill(3) + subclip_format)
             
             v = mp.VideoFileClip(self.video_file).subclip(start, end)
             a = mp.AudioFileClip(self.audio_file).subclip(start, end)
             v = v.set_audio(a)
             v.write_videofile(out, codec='libx264')
 
-        self.laugh_subclips = sorted(glob(self.session_path + '/S???-???-l???.avi'))
+        self.laugh_subclips = sorted(glob(self.session_path + '/S???-???-l???' + subclip_format))
         self.laughs_extracted = bool(len(self.laugh_subclips))
 
         print(dt.now(), 'session', self.idx, 'extracted', len(self.laugh_subclips), 'subclips')

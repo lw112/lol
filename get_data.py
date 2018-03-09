@@ -29,7 +29,9 @@ def fit_face_points(image):
 
 def main():
     
-    if len(sys.argv) > 1:
+    if sys.argv[2] == '-':
+        indices = range(int(sys.argv[1]), nb_sessions)
+    elif len(sys.argv) > 1:
         indices = sys.argv[1:]
     else:
         indices = range(nb_sessions)
@@ -38,7 +40,7 @@ def main():
     print(t1, 'Loading sessions', indices)
 
     all_sessions, fails = {}, []
-    for path in indices:
+    for index in indices:
         try:
             session = Session(index)
             session.extract_laughter_subclips_from_video()
@@ -72,4 +74,8 @@ def main():
     done()
 
 if __name__ == '__main__':
+    # command line args
+    # python get_data.py [session_no]       --> get data for this session only
+    # python get_data.py [session_no] -     --> get data for this session and all following
+    # python get_data.py                    --> get data for all sesssion starting at 1
     main()
