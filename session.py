@@ -6,6 +6,7 @@ import numpy as np
 from scipy.io import wavfile
 import cv2
 import av
+from datetime import datetime as dt
 
 from tools import frame_path_to_idx
 
@@ -13,31 +14,32 @@ sessions_dir = 'data/Sessions/'
 frame_format = '.jpg'
 point_format = '.txt'
 
-categories = ['Laughter', 'SpeechLaughter']
-
+categories = ['Laughter', 'SpeechLaughter', 'PosedLaughter']
 
 class Session(object):
-    def __init__(self, idx, strip):
+    def __init__(self, idx):
         self.idx = int(idx)
-        self.strip = strip
 
         self.session_path = sessions_dir + str(idx) + '/'
         self.frames_path = self.session_path + 'frames/'
         self.points_path = self.session_path + 'points01/'
 
         self.csv_file = self.session_path + 'laughterAnnotation.csv'
-        self.csv = []
+        self.csv = pd.read_csv(self.csv_file)
+        
+        if not len(self.csv):
+            raise Exception('No LOLs found for session %d. (empty csv)' % self.idx)
 
-        self.video_file = glob(self.session_path + '/S*[0-9].avi')[0]
+        self.video_file = glob(self.session_path + '/S???-???.avi')[0]
+        self.laugh_subclips = sorted(glob(self.session_path + '/S???-???-l???.avi'))
         self.audio_file = glob(self.session_path + '/S*_mic.wav')[0]
         self.audio_rate = 0
         self.audio = dict()
 
         self.length = 0.0
 
-        if strip:
-            self.csv_times = dict()
-            self.csv_frames_indices = dict()
+        self.csv_times = dict()
+        self.csv_frames_indices = dict()
 
         self.setup()
 
@@ -46,6 +48,7 @@ class Session(object):
 
         self.frames_extracted = bool(len(self.all_frames_paths))
         self.points_extracted = bool(len(self.all_points_paths))
+        self.laughs_extracted = bool(len(self.laugh_subclips))
 
         self.all_frames = dict()
         self.all_points = dict()
@@ -59,15 +62,32 @@ class Session(object):
 
         if os.path.isfile(self.csv_file):
             self.csv = pd.read_csv(self.csv_file)
-        elif not os.path.isfile(self.csv_file) and self.strip:
-            print("Session does not have a laughterAnnotation.csv file!")
-            return {}
 
-        if self.strip and len(self.csv):
+        if len(self.csv):
             for idx, row in self.csv.iterrows():
                 if row['Type'] in categories:
                     self.csv_times[idx] = (row["Start Time (sec)"], row["End Time (sec)"])
                     self.csv_frames_indices[idx] = list(range(row['Start Frame'], row['End Frame']))
+
+            print(dt.now(), 's', self.idx, 'found', len(self.csv_times), 'laughs')
+
+    def extract_laughter_subclips_from_video(self):
+        avi, wav = self.video_file, self.audio_file
+
+        for idx, (start, end) in self.csv_times.items():
+            tmp = avi.replace('.avi', '-l' + str(idx).zfill(3) + 'tmp.avi')
+            out = avi.replace('.avi', '-l' + str(idx).zfill(3) + '.avi')
+            command1 = 'ffmpeg -i %s -force_key_frames %s,%s -vcodec copy -acodec copy %s' % (avi, start, end, tmp)
+            command2 = 'ffmpeg -ss %s -i %s -to %s -vcodec copy -acodec copy %s' % (start, tmp, end, out)
+            #print(command1)
+            #print(command2)
+            #os.system(command)
+            #os.system(command)
+
+        self.laugh_subclips = sorted(glob(self.session_path + '/S???-???-l???.avi'))
+        self.laughs_extracted = bool(len(self.laugh_subclips))
+
+        print(dt.now(), 's', self.idx, 'extracted', len(self.laugh_subclips), 'subclips')
 
     def extract_frames_from_video(self):
         container = av.open(self.video_file)
@@ -76,18 +96,20 @@ class Session(object):
             frames_to_extract += frames
 
         for idx, frame in enumerate(container.decode(video=0)):
-            if not self.strip or idx in frames_to_extract:
+            if idx in frames_to_extract:
                 frame.to_image().save(self.frames_path + 'frame-%04d.jpg' % frame.index)
 
         self.all_frames_paths = sorted(glob(self.frames_path + '*.jpg'))
         self.frames_extracted = bool(len(self.all_frames_paths))
+
+        print(dt.now(), 's', self.idx, 'extracted', len(self.all_frames_paths), 'frames')
 
     def read_audio_file(self):
         rate, signal = wavfile.read(self.audio_file)
         self.audio_rate = rate
         self.length = len(signal)/rate
 
-        if self.strip and len(self.csv):
+        if len(self.csv):
             for index, (start, end) in self.csv_times.items():
                 start_t, end_t = int(start*rate), int(end*rate)
                 self.audio[index] = signal[start_t: end_t]
