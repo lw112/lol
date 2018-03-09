@@ -7,6 +7,7 @@ from scipy.io import wavfile
 import cv2
 import av
 from datetime import datetime as dt
+import moviepy.editor as mp
 
 from tools import frame_path_to_idx
 
@@ -69,25 +70,23 @@ class Session(object):
                     self.csv_times[idx] = (row["Start Time (sec)"], row["End Time (sec)"])
                     self.csv_frames_indices[idx] = list(range(row['Start Frame'], row['End Frame']))
 
-            print(dt.now(), 's', self.idx, 'found', len(self.csv_times), 'laughs')
+            print(dt.now(), 'session', self.idx, 'found', len(self.csv_times), 'laughs')
 
     def extract_laughter_subclips_from_video(self):
         avi, wav = self.video_file, self.audio_file
 
         for idx, (start, end) in self.csv_times.items():
-            tmp = avi.replace('.avi', '-l' + str(idx).zfill(3) + 'tmp.avi')
-            out = avi.replace('.avi', '-l' + str(idx).zfill(3) + '.avi')
-            command1 = 'ffmpeg -i %s -force_key_frames %s,%s -vcodec copy -acodec copy %s' % (avi, start, end, tmp)
-            command2 = 'ffmpeg -ss %s -i %s -to %s -vcodec copy -acodec copy %s' % (start, tmp, end, out)
-            #print(command1)
-            #print(command2)
-            #os.system(command)
-            #os.system(command)
+            out = avi.replace('.avi', '-l' + str(idx).zfill(3) + '.mp4')
+            
+            v = mp.VideoFileClip(self.video_file).subclip(start, end)
+            a = mp.AudioFileClip(self.audio_file).subclip(start, end)
+            v = v.set_audio(a)
+            v.write_videofile(out, codec='libx264')
 
         self.laugh_subclips = sorted(glob(self.session_path + '/S???-???-l???.avi'))
         self.laughs_extracted = bool(len(self.laugh_subclips))
 
-        print(dt.now(), 's', self.idx, 'extracted', len(self.laugh_subclips), 'subclips')
+        print(dt.now(), 'session', self.idx, 'extracted', len(self.laugh_subclips), 'subclips')
 
     def extract_frames_from_video(self):
         container = av.open(self.video_file)
@@ -102,7 +101,7 @@ class Session(object):
         self.all_frames_paths = sorted(glob(self.frames_path + '*.jpg'))
         self.frames_extracted = bool(len(self.all_frames_paths))
 
-        print(dt.now(), 's', self.idx, 'extracted', len(self.all_frames_paths), 'frames')
+        print(dt.now(), 'session', self.idx, 'extracted', len(self.all_frames_paths), 'frames')
 
     def read_audio_file(self):
         rate, signal = wavfile.read(self.audio_file)
