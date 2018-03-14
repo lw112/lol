@@ -16,7 +16,7 @@ frame_format = '.jpg'
 point_format = '.txt'
 subclip_format = '.mp4'
 
-categories = ['Laughter', 'SpeechLaughter', 'PosedLaughter']
+categories = ['Laughter', 'PosedLaughter']
 
 class Session(object):
     def __init__(self, idx):
