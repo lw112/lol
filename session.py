@@ -33,7 +33,7 @@ class Session(object):
             raise Exception('No LOLs found for session %d. (empty csv)' % self.idx)
 
         self.video_file = glob(self.session_path + '/S???-???.avi')[0]
-        self.laugh_subclips = sorted(glob(self.session_path + '/S???-???-l???' + subclip_format))
+        self.laughter_subclips = sorted(glob(self.session_path + '/S???-???-l???' + subclip_format))
         self.audio_file = glob(self.session_path + '/S*_mic.wav')[0]
         self.audio_rate = 0
         self.audio = dict()
@@ -50,7 +50,7 @@ class Session(object):
 
         self.frames_extracted = bool(len(self.all_frames_paths))
         self.points_extracted = bool(len(self.all_points_paths))
-        self.laughs_extracted = bool(len(self.laugh_subclips))
+        self.laughs_extracted = bool(len(self.laughter_subclips))
 
         self.all_frames = dict()
         self.all_points = dict()
@@ -84,10 +84,10 @@ class Session(object):
             v = v.set_audio(a)
             v.write_videofile(out, codec='libx264')
 
-        self.laugh_subclips = sorted(glob(self.session_path + '/S???-???-l???' + subclip_format))
-        self.laughs_extracted = bool(len(self.laugh_subclips))
+        self.laughter_subclips = sorted(glob(self.session_path + '/S???-???-l???' + subclip_format))
+        self.laughs_extracted = bool(len(self.laughter_subclips))
 
-        print(dt.now(), 'session', self.idx, 'extracted', len(self.laugh_subclips), 'subclips')
+        print(dt.now(), 'session', self.idx, 'extracted', len(self.laughter_subclips), 'subclips')
 
     def extract_frames_from_video(self):
         container = av.open(self.video_file)

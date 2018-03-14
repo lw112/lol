@@ -28,11 +28,11 @@ def fit_face_points(image):
     return face_boxes, face_points
 
 def main():
-    
-    if sys.argv[2] == '-':
-        indices = range(int(sys.argv[1]), nb_sessions)
-    elif len(sys.argv) > 1:
+    print(sys.argv, len(sys.argv))
+    if len(sys.argv) == 2:
         indices = sys.argv[1:]
+    elif len(sys.argv) == 3 and sys.argv[2] == '-':
+        indices = range(int(sys.argv[1]), nb_sessions)      
     else:
         indices = range(nb_sessions)
 
@@ -61,6 +61,7 @@ def main():
             #        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             #        face_boxes, face_points = fit_face_points(gray)
             #        session.save_points(idx, face_points)
+            all_sessions[index] = session
         except Exception as e:
             print(e)
             fails.append(index)
