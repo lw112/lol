@@ -19,7 +19,6 @@ subclip_format = '.mp4'
 
 categories = ['Laughter', 'PosedLaughter']
 
-
 class Session(object):
     def __init__(self, idx):
         self.idx = int(idx)
