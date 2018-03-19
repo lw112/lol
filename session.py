@@ -8,6 +8,7 @@ import cv2
 import av
 from datetime import datetime as dt
 import moviepy.editor as mp
+import h5py
 
 from tools import frame_path_to_idx
 
@@ -21,10 +22,12 @@ categories = ['Laughter', 'PosedLaughter']
 class Session(object):
     def __init__(self, idx):
         self.idx = int(idx)
+        self.idx_str = str(idx).zfill(3)
 
         self.session_path = sessions_dir + str(idx) + '/'
         self.frames_path = self.session_path + 'frames/'
         self.points_path = self.session_path + 'points01/'
+        self.image_features_path = self.session_path + 'features_images_' + self.idx_str + '.h5'
 
         self.csv_file = self.session_path + 'laughterAnnotation.csv'
         self.csv = pd.read_csv(self.csv_file)
@@ -32,7 +35,8 @@ class Session(object):
         if not len(self.csv):
             raise Exception('No LOLs found for session %d. (empty csv)' % self.idx)
 
-        self.video_file = glob(self.session_path + '/S???-???.avi')[0]
+        self.video_files = glob(self.session_path + '/S???-???.avi')
+        self.video_file = self.video_files[0] if len(self.video_files) else glob(self.session_path + '/S*.avi')[0]
         self.laughter_subclips = sorted(glob(self.session_path + '/S???-???-l???' + subclip_format))
         self.audio_file = glob(self.session_path + '/S*_mic.wav')[0]
         self.audio_rate = 0
@@ -55,12 +59,14 @@ class Session(object):
         self.all_frames = dict()
         self.all_points = dict()
 
+        self.all_laughts_labels = dict()
+
     def setup(self):
         if not os.path.isdir(self.frames_path):
             os.mkdir(self.frames_path)
 
-        if not os.path.isdir(self.points_path):
-            os.mkdir(self.points_path)
+        #if not os.path.isdir(self.points_path):
+        #    os.mkdir(self.points_path)
 
         if os.path.isfile(self.csv_file):
             self.csv = pd.read_csv(self.csv_file)
@@ -70,7 +76,6 @@ class Session(object):
                 if row['Type'] in categories:
                     self.csv_times[idx] = (row["Start Time (sec)"], row["End Time (sec)"])
                     self.csv_frames_indices[idx] = list(range(row['Start Frame'], row['End Frame']))
-
             print(dt.now(), 'session', self.idx, 'found', len(self.csv_times), 'laughs')
 
     def extract_laughter_subclips_from_video(self):
@@ -126,9 +131,38 @@ class Session(object):
     def read_points(self):
         self.all_points_paths = sorted(glob(self.points_path + '*' + point_format))
         for points_file in self.all_points_paths:
-            self.all_points.append(np.loadtxt(points_file, dtype=int))
+            idx = frame_path_to_idx(points_file)
+            self.all_points[idx] = np.loadtxt(points_file, dtype=int)
         self.points_extracted = bool(len(self.all_points_paths))
 
     def save_points(self, idx, points):
         path = self.points_path + 'points-%04d' % idx + point_format
         np.savetxt(path, points, fmt='%d')
+
+    def save_video_features(self, features):
+        with h5py.File(self.image_features_path, 'w') as file:
+
+            for key, data in features.items():
+                if key == 'laughs':
+                    f1 = file.create_group('laughs')
+                    for kk, indices in features[key].items():
+                        f1.create_dataset(name=str(kk), data=indices)
+
+                else:
+                    file.create_dataset(name=key, data=data)
+
+    def read_video_features(self):
+        features = dict()
+        with h5py.File(self.image_features_path, 'r') as file:
+            labels = list(file.keys())
+            for label in labels:
+                if label == 'laughs':
+                    features[label] = dict()
+                    for k, v in file['laughs'].items():
+                        features[label][k] = list(v)
+                else:
+                    features[label] = np.array(file.get(label))
+        return features
+
+    def idx_to_frame_path(self, idx):
+        return self.frames_path + 'frame-' + str(idx).zfill(4) + '.jpg'
