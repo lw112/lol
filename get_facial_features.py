@@ -120,6 +120,34 @@ def fit_face_points(img, face_detector, points_fitter):
     return face_boxes, face_points
 
 
+def show_session_imgs_with_points(session):
+
+    if not os.path.isfile(session.image_features_path):
+        print(dt.now(), 'Extract features for this session first')
+    else:
+        features = session.read_video_features()
+        images, points = features['images'], features['points']
+        all_labels, faces_found = list(features['all_labels']), list(features['faces_found'])
+
+        print(images.shape, points.shape, len(all_labels), len(faces_found))
+        print(all_labels, faces_found)
+        
+        for label in all_labels:
+            
+            frame_idx = all_labels.index(label)
+            points_idx = faces_found.index(label) if label in faces_found else None
+            print(label, frame_idx, points_idx)
+
+            img = images[frame_idx, :, :]
+            if points_idx is not None:
+                for (x, y) in points[points_idx]:
+                    cv2.circle(img, (x, y), 1, (0, 0, 255), -1)
+            cv2.imshow('Session ' + session.idx_str, img)
+            if cv2.waitKey(50) & 0xFF == ord('q'):
+                continue
+        cv2.destroyAllWindows()
+
+
 if __name__ == '__main__':
     # command line args
     # python get_facial_features.py [session_no]       --> get data for this session only
