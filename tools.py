@@ -3,7 +3,7 @@ import numpy as np
 
 
 def frame_path_to_idx(frame_path):
-    return int(os.path.basename(frame_path)[6:-4])
+    return int(os.path.basename(frame_path)[-8:-4])
 
 
 def done():
