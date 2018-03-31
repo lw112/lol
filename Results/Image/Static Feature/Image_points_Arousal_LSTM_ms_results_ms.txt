@@ -1,0 +1,4 @@
+Mean of predictions is: 1.76716
+Variance is: 0.9075786065391116
+Mean of test set is: 1.861244019138756
+Variance (benchmark) is: 1.286966873469014%
