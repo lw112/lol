@@ -1,0 +1,11 @@
+Audio weight 0%, Image weight: 100% - MSE:1.685035395193836
+Audio weight 10%, Image weight: 90% - MSE:1.6412931512708497
+Audio weight 20%, Image weight: 80% - MSE:1.6021417331295396
+Audio weight 30%, Image weight: 70% - MSE:1.567581140769905
+Audio weight 40%, Image weight: 60% - MSE:1.537611374191946
+Audio weight 50%, Image weight: 50% - MSE:1.5122324333956632
+Audio weight 60%, Image weight: 40% - MSE:1.4914443183810562
+Audio weight 70%, Image weight: 30% - MSE:1.475247029148125
+Audio weight 80%, Image weight: 20% - MSE:1.4636405656968696
+Audio weight 90%, Image weight: 10% - MSE:1.45662492802729
+Audio weight 100%, Image weight: 0% - MSE:1.454200116139386
