@@ -1,0 +1,6 @@
+Mean of predictions is: 2.24224
+Variance is: 0.860132546939
+Mean of test set is: 2.31100478469
+Variance (benchmark) is: 0.702319086102% 
+
+Overall MSE: 0.8909
