@@ -49,26 +49,25 @@ X_test = data_imgs[test_indexes]
 clip_lengths_train = clip_lengths[train_indexes]
 clip_lengths_test = clip_lengths[test_indexes]
 
-audio_predictions = np.loadtxt('Results/Emotion_audio_result_LSTM_BN.txt')
-image_predictions = np.loadtxt('Results/Image_points_Emotion_predictions_LSTM_ms.txt')
+audio_predictions = np.loadtxt('Results/Audio/Emotion_audio_multi_preds.txt', delimiter=',')
+image_predictions = np.loadtxt('Results/Image/Static Feature/Facial_points_Emotion_predictions_LSTM_ms.txt', delimiter=',')
 
 def weighted_predictions(audio, audio_percentage, image, image_precentage):
-    res = np.floor(audio_percentage*audio*0.01 + image_precentage*image*0.01)
+    res = audio_percentage*audio*0.01 + image_precentage*image*0.01
+    return res
+
+def weighted_probs(audio, image):
+    res = audio + image
     return res
 
 try:
-    f = open('Results/Emotion_weighted_results.txt','w+')
-    for i in range(0, 110, 10):
-        wp = weighted_predictions(audio_predictions, i, image_predictions, 100-i)
-        acc = np.equal(wp, y_test)
-        acc_ = np.mean(acc)
-        f.write('Audio weight ')
-        f.write(str(i))
-        f.write('%, Image weight: ')
-        f.write(str(100-i))
-        f.write('% :')
-        f.write(str(acc_))
-        f.write('%\n')
+    f = open('Results/Late fusion/Emotion_weighted_results.txt','w+')
+    wp = weighted_probs(audio_predictions, image_predictions)
+    pred = np.argmax(wp, axis = -1)
+    acc = np.mean(np.equal(pred, y_test))
+    f.write('Audio and Image weighted probs resulting accuracy: ')
+    f.write(str(acc))
+    f.write('%\n')
     f.close()
 except IOError as e:
     print("I/O error({0}): {1}".format(e.errno, e.strerror))
@@ -79,23 +78,22 @@ except:
     raise
 
 
-audio_predictions = np.loadtxt('Results/Dominance_audio_predictions_LSTM.txt')
-image_predictions = np.loadtxt('Results/Image_points_Dominance_predictions_LSTM_ms.txt')
+audio_predictions = np.loadtxt('Results/Audio/Dominance_audio_predictions_LSTM_ms.txt', delimiter=',')
+image_predictions = np.loadtxt('Results/Image/Static Feature/Facial_points_Dominance_predictions_LSTM_ms.txt', delimiter=',')
 
 
 try:
-    f = open('Results/Dominace_weighted_results.txt','w+')
+    f = open('Results/Late fusion/Dominace_weighted_results.txt','w+')
     for i in range(0, 110, 10):
         wp = weighted_predictions(audio_predictions, i, image_predictions, 100-i)
-        acc = np.equal(wp, y_test)
-        acc_ = np.mean(acc)
+        mse = np.mean((wp - y_test)**2)
         f.write('Audio weight ')
         f.write(str(i))
         f.write('%, Image weight: ')
         f.write(str(100-i))
-        f.write('% :')
-        f.write(str(acc_))
-        f.write('%\n')
+        f.write('% - MSE:')
+        f.write(str(mse))
+        f.write('\n')
     f.close()
 except IOError as e:
     print("I/O error({0}): {1}".format(e.errno, e.strerror))
@@ -108,23 +106,21 @@ except:
 
 
 
-audio_predictions = np.loadtxt('Results/Arousal_audio_predictions_LSTM.txt')
-image_predictions = np.loadtxt('Results/Image_points_Arousal_predictions_LSTM_ms.txt')
-
+audio_predictions = np.loadtxt('Results/Audio/Arousal_audio_predictions_LSTM_ms.txt', delimiter=',')
+image_predictions = np.loadtxt('Results/Image/Static Feature/Facial_points_Arousal_predictions_LSTM_ms.txt', delimiter=',')
 
 try:
-    f = open('Results/Arousal_weighted_results.txt','w+')
+    f = open('Results/Late fusion/Arousal_weighted_results.txt','w+')
     for i in range(0, 110, 10):
         wp = weighted_predictions(audio_predictions, i, image_predictions, 100-i)
-        acc = np.equal(wp, y_test)
-        acc_ = np.mean(acc)
+        mse = np.mean((wp - y_test)**2)
         f.write('Audio weight ')
         f.write(str(i))
         f.write('%, Image weight: ')
         f.write(str(100-i))
-        f.write('% :')
-        f.write(str(acc_))
-        f.write('%\n')
+        f.write('% - MSE:')
+        f.write(str(mse))
+        f.write('\n')
     f.close()
 except IOError as e:
     print("I/O error({0}): {1}".format(e.errno, e.strerror))
