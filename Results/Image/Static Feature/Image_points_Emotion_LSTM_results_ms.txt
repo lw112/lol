@@ -12,3 +12,5 @@ Confusion matrix:
           3       0.21      0.15      0.17        41
 
 avg / total       0.38      0.44      0.37       209
+
+Accuracy: 0.4449760765550239%
