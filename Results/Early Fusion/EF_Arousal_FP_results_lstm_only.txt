@@ -1,3 +1,5 @@
+# Early Fusion for Arousal - convolutions removed, used simple LSTM only 
+
 Mean of predictions is: 1.87548
 Variance (benchmark) is: 0.589215752708
 Mean of test set is: 1.86124401914
